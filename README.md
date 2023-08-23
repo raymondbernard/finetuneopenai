@@ -50,7 +50,7 @@ Feel free to raise issues, provide feedback, or make contributions to improve th
 This project is licensed under the MIT License. See `LICENSE` for more information.
 
 
-## openaicheck.py
+## openaicheck.py *(written by OpenAI)
 
 `openaicheck.py` is a script designed to inspect and validate the structure of a dataset for chat completions. It performs the following operations:
 1. **Data Inspection**: The script initially loads the dataset from `output.jsonl` and prints the number of examples and the first example to provide an overview.
