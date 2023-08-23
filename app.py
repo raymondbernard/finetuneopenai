@@ -2,7 +2,7 @@ import streamlit as st
 import jsonlines
 import subprocess
 
-st.title('Create JSONL to fine tune OpenAi chat')
+st.title('Create JSONL to fine-tune OpenAi')
 
 # Get prompts from the user
 prompt_text = st.text_area('Enter your question? Human:', height=200)

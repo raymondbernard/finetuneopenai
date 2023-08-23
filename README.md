@@ -1,4 +1,5 @@
 
+
 # Create JSONL to fine tune OpenAI's Chat Model
 
 This application is built using Streamlit and helps users  create a properly  formatted Jsonl file.  This file format is needed to fine-tune a OpenAi chat model.
@@ -24,6 +25,22 @@ data = {
 
 ## Setup & Run
 
+1. Clone the repository using:
+   ```
+   git clone https://github.com/raymondbernard/finetuneopenai.git
+   ```
+2. Navigate to the repository directory:
+   ```
+   cd finetuneopenai
+   ```
+3. Install the required packages using:
+   ```
+   pip install -r requirements.txt
+   ```
+4. Run the Streamlit app using:
+   ```
+   streamlit run app.py
+   ```
 1. Clone this repository.
 2. Install the required packages using:
    ```
@@ -38,6 +55,8 @@ data = {
 
 - streamlit
 - jsonlines
+- tiktoken
+- numpy
 
 ## Feedback & Contributions
 
