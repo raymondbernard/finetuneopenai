@@ -3,7 +3,7 @@
 *.pyo
 *.egg-info
 *.cache
-
+output.jsonl
 # Directories
 __pycache__/
 *.venv/
