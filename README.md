@@ -41,12 +41,11 @@ data = {
    ```
    streamlit run app.py
    ```
-1. Clone this repository.
-2. Install the required packages using:
+5. Install the required packages using:
    ```
    pip install -r requirements.txt
    ```
-3. Run the Streamlit app using:
+6. Run the Streamlit app using:
    ```
    streamlit run app.py
    ```
