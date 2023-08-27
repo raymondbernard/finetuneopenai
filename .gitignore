@@ -8,7 +8,7 @@ output.jsonl
 __pycache__/
 *.venv/
 *.virtualenv/
-*.env/
+*.env
 build/
 dist/
 bak/
