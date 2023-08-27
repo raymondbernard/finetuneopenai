@@ -8,7 +8,6 @@ output.jsonl
 __pycache__/
 *.venv/
 *.virtualenv/
-*.env
 build/
 dist/
 bak/
@@ -24,3 +23,4 @@ bak/
 ._*
 .Spotlight-V100
 .Trashes
+.env
