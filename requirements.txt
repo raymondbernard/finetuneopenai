@@ -2,3 +2,5 @@ streamlit
 jsonlines
 tiktoken
 numpy
+requests
+python-dotenv

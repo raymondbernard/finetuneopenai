@@ -1,20 +1,17 @@
 
-
 # Create JSONL to fine tune OpenAI's Chat Model
 
-This application is built using Streamlit and helps users  create a properly  formatted Jsonl file.  This file format is needed to fine-tune a OpenAi chat model.
+This application is built using Streamlit and helps users create a properly formatted Jsonl file. This file format is needed to fine-tune an OpenAi chat model.
 
-```
+```python
 data = {
     "messages": [
-        {"role": "system", "content": f"{system_message}"},
-        {"role": "user", "content": f"{prompt_text}"},
-        {"role": "assistant", "content": f"{ideal_generated_text}"}
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": prompt_text},
+        {"role": "assistant", "content": ideal_generated_text}
     ]
 }
-
 ```
-
 
 ## Features
 
@@ -22,6 +19,10 @@ data = {
 2. **AI Response**: Provide your ideal AI-generated response.
 3. **Custom System Message**: Add a custom system message or stick with the default message "You are a helpful and friendly assistant.".
 4. **Data Saving**: Upon pressing the "Accept Inputs" button, the provided data gets formatted and appended to an `output.jsonl` file.
+5. **TRAINING_FILE_ID Input**: Users can input their TRAINING_FILE_ID required for fine-tuning.
+6. **Fine-Tuning**: A button to send the `output.jsonl` file to OpenAI for fine-tuning.
+7. **Chat Window**: Test the fine-tuned model by sending messages and viewing the model's response.
+8. **Help**: Instructions on how to securely store the OpenAI API key.
 
 ## Setup & Run
 
@@ -41,14 +42,6 @@ data = {
    ```
    streamlit run app.py
    ```
-5. Install the required packages using:
-   ```
-   pip install -r requirements.txt
-   ```
-6. Run the Streamlit app using:
-   ```
-   streamlit run app.py
-   ```
 
 ## Dependencies
 
@@ -56,17 +49,16 @@ data = {
 - jsonlines
 - tiktoken
 - numpy
+- requests
+- python-dotenv
 
 ## Feedback & Contributions
 
 Feel free to raise issues, provide feedback, or make contributions to improve the application.
 
-
-
 ### License
 
 This project is licensed under the MIT License. See `LICENSE` for more information.
-
 
 ## openaicheck.py *(written by OpenAI)
 
@@ -100,13 +92,11 @@ For each distribution, the following statistics are provided:
 
 [OpenAI Blog: GPT-3.5 Turbo, Fine-Tuning, and API Updates](https://openai.com/blog/gpt-3-5-turbo-fine-tuning-and-api-updates)
 
-
-[OpenAI  Fine-Tuning guide](https://platform.openai.com/docs/guides/fine-tuning)
-
+[OpenAI Fine-Tuning guide](https://platform.openai.com/docs/guides/fine-tuning)
 
 ### Authors
 MIT License
 
 (c) 2023 Ray Bernard 
 
-This is a simple guide to get started with the fine tune OpenAI Chat model. Please, do not hesitate to open an issue if you encounter any problem or have a suggestion.
+This is a simple guide to get started with the fine-tune OpenAI Chat model. Please, do not hesitate to open an issue if you encounter any problem or have a suggestion.
