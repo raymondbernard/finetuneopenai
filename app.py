@@ -12,7 +12,7 @@ if os.path.exists('.env'):
 else:
     OPENAI_API_KEY = None
 
-st.header('Fine-tunning OpenAI & test the responses')
+st.header('Fine-tune OpenAI & test the responses')
 
 # If OPENAI_API_KEY is not found, provide instructions and input to save to .env
 if not OPENAI_API_KEY:
