@@ -101,6 +101,11 @@ if st.button('Validate your data', key="check_data_btn_2"):
     st.write(result.stdout)
 
 
+
+
+# Input for TRAINING_FILE_ID
+training_file_id = st.text_input('Enter your TRAINING_FILE_ID:* wait until you get an email from OpenAI with your ID')
+
 if st.button('Send for Fine Tuning'):
     if not training_file_id:
         st.warning("Please enter a TRAINING_FILE_ID before sending for fine tuning.")
@@ -117,8 +122,6 @@ if st.button('Send for Fine Tuning'):
         response = requests.post("https://api.openai.com/v1/fine_tuning/jobs", headers=headers, json=data)
         st.write(response.json())
 
-# Input for TRAINING_FILE_ID
-training_file_id = st.text_input('Enter your TRAINING_FILE_ID:* wait until you get an email from OpenAI with your ID')
 # Chat window to test the fine-tuned model
 st.subheader("Test Fine-tuned Model")
 user_message_chat = st.text_area('User Message:')
