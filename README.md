@@ -2,6 +2,7 @@
 # Create JSONL to fine tune OpenAI's Chat Model
 
 This application is built using Streamlit and helps users create a properly formatted Jsonl file. This file format is needed to fine-tune an OpenAi chat model.
+This application is meant to be used locally please see our other version for a remote use. 
 
 ```python
 data = {
@@ -22,7 +23,7 @@ data = {
 5. **TRAINING_FILE_ID Input**: Users can input their TRAINING_FILE_ID required for fine-tuning.
 6. **Fine-Tuning**: A button to send the `output.jsonl` file to OpenAI for fine-tuning.
 7. **Chat Window**: Test the fine-tuned model by sending messages and viewing the model's response.
-8. **Help**: Instructions on how to securely store the OpenAI API key.
+
 
 ## Setup & Run
 
@@ -51,7 +52,7 @@ data = {
 - numpy
 - requests
 - python-dotenv
-
+- streamlit_extras
 ## Feedback & Contributions
 
 Feel free to raise issues, provide feedback, or make contributions to improve the application.

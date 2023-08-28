@@ -40,9 +40,6 @@ if not ORG_ID:
 
 # Toggle visibility of the Help section using session state
 
-
-
-
 if 'show_help' not in st.session_state:
     st.session_state.show_help = False
 
