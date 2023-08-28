@@ -1,22 +1,29 @@
-
 import streamlit as st
-import requests
-import json
-from dotenv import load_dotenv
+import jsonlines
+import subprocess
 import os
-import tiktoken
-import numpy as np
-from collections import defaultdict
-from streamlit_extras.buy_me_a_coffee import button
+import requests
+from dotenv import load_dotenv
 
-# Initialize an empty list in memory to store the data
-if 'jsonl_data_list' not in st.session_state:
-    st.session_state.jsonl_data_list = []
 # Check for .env and load if present
+if os.path.exists('.env'):
+    load_dotenv()
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+else:
+    OPENAI_API_KEY = None
 
+st.header('Fine-tune OpenAI & test the responses')
 
-st.header('Fine-tune OpenAI')
-st.text('''This application helps you to prepare , validate and test the responses from OpenAI.''')
+# If OPENAI_API_KEY is not found, provide instructions and input to save to .env
+if not OPENAI_API_KEY:
+    st.warning("Your OpenAI API key is not found in a .env file.")
+    st.write("Please provide your OpenAI API key below to save it securely in a .env file.")
+    user_api_key = st.text_input('Enter your OpenAI API Key:')
+    if st.button('Save API Key'):
+        with open('.env', 'w') as env_file:
+            env_file.write(f"OPENAI_API_KEY={user_api_key}")
+        st.success('Your API Key has been saved to .env file!')
+        OPENAI_API_KEY = user_api_key
 
 # Toggle visibility of the Help section using session state
 if 'show_help' not in st.session_state:
@@ -68,234 +75,31 @@ if st.session_state.show_help:
         """
     )
 
-
 # Get prompts from the user
-system_message_default = 'You are a helpful and friendly assistant.'
-system_message = st.text_area('Enter your custom system message:', value=system_message_default)
 prompt_text = st.text_area('Enter your question? Human:', height=200)
 ideal_generated_text = st.text_area('Enter your ideal AI generated response:', height=200)
+system_message_default = 'You are a helpful and friendly assistant.'
+system_message = st.text_area('Enter your custom system message:', value=system_message_default)
 
-# Format the data
-data = {
-    "messages": [
-        {"role": "system", "content": system_message},
-        {"role": "user", "content": prompt_text},
-        {"role": "assistant", "content": ideal_generated_text}
-    ]
-}
 
-if st.button('Append Data'):
-    if system_message and prompt_text and ideal_generated_text:
-        # Append the data to the in-memory list
-        st.session_state.jsonl_data_list.append(data)
-        st.success('Data has been appended!')
-        # Display the current contents of the in-memory list for verification
-        st.write("Current Data:", st.session_state.jsonl_data_list)
-    else:
-        st.warning('Please ensure all fields are filled before appending.')
+if st.button('Append to output.jsonl'):
+    # Format and save data to jsonl
+    data = {
+        "messages": [
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": prompt_text},
+            {"role": "assistant", "content": ideal_generated_text}
+        ]
+    }
+    with jsonlines.open('output.jsonl', mode='a') as writer:
+        writer.write(data)
+    st.success('Data has been appended to JSONL file!')
 
 
 if st.button('Validate your data', key="check_data_btn_2"):
-        
-    # Load dataset
+    result = subprocess.run(['python', 'openaicheck.py'], capture_output=True, text=True)
+    st.write(result.stdout)
 
-    dataset = st.session_state.jsonl_data_list
-
-    # We can inspect the data quickly by checking the number of examples and the first item
-
-    # Initial dataset stats
-    st.write("Num examples:", len(dataset))
-    st.write("First example:")
-
-    for message in dataset[0]["messages"]:
-        st.write(message)
-
-    # Now that we have a sense of the data, we need to go through all the different examples and check to make sure the formatting is correct and matches the Chat completions message structure
-
-    # Format error checks
-    format_errors = defaultdict(int)
-
-    for ex in dataset:
-        if not isinstance(ex, dict):
-            format_errors["data_type"] += 1
-            continue
-
-        messages = ex.get("messages", None)
-        if not messages:
-            format_errors["missing_messages_list"] += 1
-            continue
-
-        for message in messages:
-            if "role" not in message or "content" not in message:
-                format_errors["message_missing_key"] += 1
-
-            if any(k not in ("role", "content", "name") for k in message):
-                format_errors["message_unrecognized_key"] += 1
-
-            if message.get("role", None) not in ("system", "user", "assistant"):
-                format_errors["unrecognized_role"] += 1
-
-            content = message.get("content", None)
-            if not content or not isinstance(content, str):
-                format_errors["missing_content"] += 1
-
-        if not any(message.get("role", None) == "assistant" for message in messages):
-            format_errors["example_missing_assistant_message"] += 1
-
-    if format_errors:
-        st.write("Found errors:")
-        for k, v in format_errors.items():
-            st.write(f"{k}: {v}")
-    else:
-        st.write("No errors found")
-
-    # Beyond the structure of the message, we also need to ensure that the length does not exceed the 4096 token limit.
-
-    # Token counting functions
-    encoding = tiktoken.get_encoding("cl100k_base")
-
-    # not exact!
-    # simplified from https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
-    def num_tokens_from_messages(messages, tokens_per_message=3, tokens_per_name=1):
-        num_tokens = 0
-        for message in messages:
-            num_tokens += tokens_per_message
-            for key, value in message.items():
-                num_tokens += len(encoding.encode(value))
-                if key == "name":
-                    num_tokens += tokens_per_name
-        num_tokens += 3
-        return num_tokens
-
-    def num_assistant_tokens_from_messages(messages):
-        num_tokens = 0
-        for message in messages:
-            if message["role"] == "assistant":
-                num_tokens += len(encoding.encode(message["content"]))
-        return num_tokens
-
-    def print_distribution(values, name):
-        st.write(f"\n#### Distribution of {name}:")
-        st.write(f"min / max: {min(values)}, {max(values)}")
-        st.write(f"mean / median: {np.mean(values)}, {np.median(values)}")
-        st.write(f"percentage 5 % / percentage 95 %: {np.quantile(values, 0.1)}, {np.quantile(values, 0.9)}")
-
-    # Last, we can look at the results of the different formatting operations before proceeding with creating a fine-tuning job:
-
-    # Warnings and tokens counts
-    n_missing_system = 0
-    n_missing_user = 0
-    n_messages = []
-    convo_lens = []
-    assistant_message_lens = []
-
-    for ex in dataset:
-        messages = ex["messages"]
-        if not any(message["role"] == "system" for message in messages):
-            n_missing_system += 1
-        if not any(message["role"] == "user" for message in messages):
-            n_missing_user += 1
-        n_messages.append(len(messages))
-        convo_lens.append(num_tokens_from_messages(messages))
-        assistant_message_lens.append(num_assistant_tokens_from_messages(messages))
-    st.write("Num examples missing system message:", n_missing_system)
-    st.write("Num examples missing user message:", n_missing_user)
-    st.write("num_messages_per_example =", n_messages )
-
-
-    print_distribution(convo_lens, "num_total_tokens_per_example")
-    print_distribution(assistant_message_lens, "num_assistant_tokens_per_example")
-             
-    n_too_long = sum(l > 4096 for l in convo_lens)
-
-    # Pricing and default n_epochs estimate
-    MAX_TOKENS_PER_EXAMPLE = 4096
-
-    MIN_TARGET_EXAMPLES = 100
-    MAX_TARGET_EXAMPLES = 25000
-    TARGET_EPOCHS = 3
-    MIN_EPOCHS = 1
-    MAX_EPOCHS = 25
-
-    n_epochs = TARGET_EPOCHS
-    n_train_examples = len(dataset)
-    if n_train_examples * TARGET_EPOCHS < MIN_TARGET_EXAMPLES:
-        n_epochs = min(MAX_EPOCHS, MIN_TARGET_EXAMPLES // n_train_examples)
-    elif n_train_examples * TARGET_EPOCHS > MAX_TARGET_EXAMPLES:
-        n_epochs = max(MIN_EPOCHS, MAX_TARGET_EXAMPLES // n_train_examples)
-
-    n_billing_tokens_in_dataset = sum(min(MAX_TOKENS_PER_EXAMPLE, length) for length in convo_lens)
-    
-    st.write(f"Dataset has ~{n_billing_tokens_in_dataset} tokens that will be charged for during training")
-    st.write(f"By default, you'll train for {n_epochs} epochs on this dataset")
-    st.write(f"By default, you'll be charged for ~{n_epochs * n_billing_tokens_in_dataset} tokens")
-    st.write("See pricing page to estimate total costs")
-
-# Provide a button to download the data as a JSONL file
-if st.download_button('Download JSONL File', data="\n".join([json.dumps(item) for item in st.session_state.jsonl_data_list]), file_name='output.jsonl', mime='text/plain'):
-    st.write('Download initiated!')
-
-
-def mock_response_201():
-    response = requests.Response()
-    response.status_code = 201
-    response._content = b'{"message": "Successfully created."}'  # Sample JSON response content
-    return response
-
-
-def upload_dataset_to_openai(api_key):
-    # Convert the dataset in memory to .jsonl format
-    jsonl_data = "\n".join([json.dumps(item) for item in st.session_state.jsonl_data_list])
-    
-    # Define the URL and headers
-    url = "https://api.openai.com/v1/files"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/jsonl"
-    }
-    
-    # Since we're sending content directly, we'll use the 'data' parameter of requests.post 
-    # and not the 'json' or 'files' parameter.
-    response = requests.post(url, headers=headers, data=jsonl_data)
-    
-    return response
-# Streamlit code to capture and store openai_api_key and org_id in session state
-
-# If OPENAI_API_KEY is not already in session state, initialize it as None
-if 'OPENAI_API_KEY' not in st.session_state:
-    st.session_state.OPENAI_API_KEY = None
-
-# If org_id is not already in session state, initialize it as None
-if 'org_id' not in st.session_state:
-    st.session_state.org_id = None
-
-# Create input boxes for openai_api_key and org_id
-openai_api_key_input = st.text_input("Enter your OpenAI API Key:", value=st.session_state.OPENAI_API_KEY)
-org_id_input = st.text_input("Enter your Org ID:")
-
-# Update session state with input values
-st.session_state.OPENAI_API_KEY = openai_api_key_input
-st.session_state.org_id = org_id_input
-
-# Display the stored values (optional, just for demonstration)
-st.write("Stored OpenAI API Key:", st.session_state.OPENAI_API_KEY)
-st.write("Stored Org ID:", st.session_state.org_id)
-
-if st.button('Upload to OpenAI'):
-    #uncomment for production 
-    response = upload_dataset_to_openai(OPENAI_API_KEY)
-    
-    # Using the mock response Using only for testing    
-    # response = mock_response_201()
-
-    if response.status_code == 201:  # HTTP 201 Created indicates a successful upload
-        st.success("Successfully uploaded dataset to OpenAI!")
-    else:
-        st.error(f"Failed to upload dataset. Response: {response.text}")
-
-
-# Input for TRAINING_FILE_ID
-training_file_id = st.text_input('Enter your TRAINING_FILE_ID:* wait until you get an email from OpenAI with your ID')
 
 if st.button('Send for Fine Tuning'):
     if not training_file_id:
@@ -304,17 +108,17 @@ if st.button('Send for Fine Tuning'):
         # Send the output.jsonl for fine tuning
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {st.session_state.OPENAI_API_KEY}"
+            "Authorization": f"Bearer {OPENAI_API_KEY}"
         }
         data = {
             "training_file": training_file_id,
             "model": "gpt-3.5-turbo-0613"
         }
-        # response = requests.post("https://api.openai.com/v1/fine_tuning/jobs", headers=headers, json=data)
-        # st.write(response.json())
-        st.write("data sent to OpenAI for training")
+        response = requests.post("https://api.openai.com/v1/fine_tuning/jobs", headers=headers, json=data)
+        st.write(response.json())
 
-
+# Input for TRAINING_FILE_ID
+training_file_id = st.text_input('Enter your TRAINING_FILE_ID:* wait until you get an email from OpenAI with your ID')
 # Chat window to test the fine-tuned model
 st.subheader("Test Fine-tuned Model")
 user_message_chat = st.text_area('User Message:')
@@ -324,7 +128,7 @@ if st.button('Get Response', disabled=not training_file_id):
         "Authorization": f"Bearer {OPENAI_API_KEY}"
     }
     data = {
-        "model": "ft:gpt-3.5-turbo:"f"{st.session_state.org_id}",
+        "model": "ft:gpt-3.5-turbo:org_id",
         "messages": [
             {"role": "user", "content": user_message_chat},
         ]
@@ -332,5 +136,3 @@ if st.button('Get Response', disabled=not training_file_id):
     response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=data)
     assistant_message = response.json().get("choices", [{}])[0].get("message", {}).get("content", "")
     st.text_area('Assistant Response:', assistant_message)
-
-button(username="raybernardv", floating=False, width=221)
