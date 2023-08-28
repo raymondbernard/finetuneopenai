@@ -4,11 +4,14 @@ import subprocess
 import os
 import requests
 from dotenv import load_dotenv
+from streamlit_extras.buy_me_a_coffee import button
 
 # Check for .env and load if present
 if os.path.exists('.env'):
     load_dotenv()
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    ORG_ID = os.getenv("ORG_ID")
+
 else:
     OPENAI_API_KEY = None
 
@@ -21,9 +24,19 @@ if not OPENAI_API_KEY:
     user_api_key = st.text_input('Enter your OpenAI API Key:')
     if st.button('Save API Key'):
         with open('.env', 'w') as env_file:
-            env_file.write(f"OPENAI_API_KEY={user_api_key}")
+            env_file.write(f"OPENAI_API_KEY='{user_api_key}'")
         st.success('Your API Key has been saved to .env file!')
         OPENAI_API_KEY = user_api_key
+if not ORG_ID:
+    st.warning("Your ORG_ID is not found in a .env file.")
+    st.write("Please provide your ORG_ID below to save it securely in a .env file.")
+    user_org_id = st.text_input('Enter your ORG_ID:')
+    if st.button('Save ORG_ID'):
+        with open('.env', 'a') as env_file:  # Appending to the .env file
+            env_file.write(f"\nORG_ID='{user_org_id}'")  # Using double quotes for the f-string and single quotes for the value
+        st.success('Your ORG_ID has been saved to .env file!')
+        ORG_ID = user_org_id
+
 
 # Toggle visibility of the Help section using session state
 if 'show_help' not in st.session_state:
@@ -131,7 +144,7 @@ if st.button('Get Response', disabled=not training_file_id):
         "Authorization": f"Bearer {OPENAI_API_KEY}"
     }
     data = {
-        "model": "ft:gpt-3.5-turbo:org_id",
+        "model": f"ft:gpt-3.5-turbo:{ORG_ID}",
         "messages": [
             {"role": "user", "content": user_message_chat},
         ]
@@ -139,3 +152,4 @@ if st.button('Get Response', disabled=not training_file_id):
     response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=data)
     assistant_message = response.json().get("choices", [{}])[0].get("message", {}).get("content", "")
     st.text_area('Assistant Response:', assistant_message)
+button(username="raybernardv", floating=False, width=221)
