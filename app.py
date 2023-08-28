@@ -55,6 +55,7 @@ if st.session_state.show_help:
         3. **Custom System Message**: Add a custom system message or stick with the default message "You are a helpful and friendly assistant.".
         4. **Data Saving**: Upon pressing the "Accept Inputs" button, the provided data gets formatted and appended to an `output.jsonl` file.
         5. **TRAINING_FILE_ID Input**: Users can input their TRAINING_FILE_ID required for fine-tuning. You will receive an email from OpenAI when the model has been trained.
+        5. **Upload file to OpenAI for fine-tunning**
         6. **Send for Fine-Tuning**: A button to send the `output.jsonl` file to OpenAI for fine-tuning.
         7. **Chat Window**: Test the fine-tuned model by sending messages and viewing the model's response.
           
