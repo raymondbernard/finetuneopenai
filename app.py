@@ -4,6 +4,7 @@ import subprocess
 import os
 import requests
 from dotenv import load_dotenv
+from streamlit_extras.buy_me_a_coffee import button
 
 # Check for .env and load if present
 if os.path.exists('.env'):
@@ -177,3 +178,4 @@ if st.button('Get Response', disabled=not training_file_id):
     response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=data)
     assistant_message = response.json().get("choices", [{}])[0].get("message", {}).get("content", "")
     st.text_area('Assistant Response:', assistant_message)
+button(username="raybernardv", floating=False, width=221)
