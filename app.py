@@ -4,7 +4,6 @@ import subprocess
 import os
 import requests
 from dotenv import load_dotenv
-from streamlit_extras.buy_me_a_coffee import button
 
 # Check for .env and load if present
 if os.path.exists('.env'):
@@ -39,6 +38,10 @@ if not ORG_ID:
 
 
 # Toggle visibility of the Help section using session state
+
+
+
+
 if 'show_help' not in st.session_state:
     st.session_state.show_help = False
 
@@ -89,11 +92,10 @@ if st.session_state.show_help:
     )
 
 # Get prompts from the user
-system_message_default = 'You are a helpful and friendly assistant.'
-system_message = st.text_area('Enter your custom system message:', value=system_message_default)
 prompt_text = st.text_area('Enter your question? Human:', height=200)
 ideal_generated_text = st.text_area('Enter your ideal AI generated response:', height=200)
-
+system_message_default = 'You are a helpful and friendly assistant.'
+system_message = st.text_area('Enter your custom system message:', value=system_message_default)
 
 
 if st.button('Append to output.jsonl'):
@@ -115,6 +117,28 @@ if st.button('Validate your data', key="check_data_btn_2"):
     st.write(result.stdout)
 
 
+# Upload to OpenAI
+uploaded_file = st.file_uploader("Choose an output.jsonl file", type="jsonl")
+if uploaded_file:
+    if st.button('Upload to OpenAI'):
+        with open("uploaded_output.jsonl", "wb") as f:
+            f.write(uploaded_file.getvalue())
+        
+        url = "https://api.openai.com/v1/files"
+        headers = {
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+        }
+        files = {
+            "purpose": (None, "fine-tune"),
+            "file": ("uploaded_output.jsonl", open("uploaded_output.jsonl", "rb")),
+        }
+        
+        response = requests.post(url, headers=headers, files=files)
+        
+        if response.status_code == 200:
+            st.success("File successfully uploaded to OpenAI!")
+        else:
+            st.error("Failed to upload file. Please check the API key and file format.")
 
 
 # Input for TRAINING_FILE_ID
@@ -153,4 +177,3 @@ if st.button('Get Response', disabled=not training_file_id):
     response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=data)
     assistant_message = response.json().get("choices", [{}])[0].get("message", {}).get("content", "")
     st.text_area('Assistant Response:', assistant_message)
-button(username="raybernardv", floating=False, width=221)
